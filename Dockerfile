@@ -26,8 +26,8 @@ RUN curl -sL "https://github.com/actions/runner/releases/download/v${RUNNER_VERS
     && ./bin/installdependencies.sh \
     && chown -R runner:runner /home/runner
 
-# Allure for report generation
-RUN npm install -g allure-commandline
+# Allure + Wrangler (used for R2 report uploads)
+RUN npm install -g allure-commandline wrangler
 
 COPY entrypoint.sh /home/runner/entrypoint.sh
 RUN chmod +x /home/runner/entrypoint.sh
