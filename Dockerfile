@@ -10,10 +10,15 @@ RUN npx -y playwright@${PLAYWRIGHT_VERSION} install --with-deps chromium
 
 # Extra tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    jq sudo \
+    jq sudo curl \
+    && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+       -o /usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+       > /etc/apt/sources.list.d/github-cli.list \
+    && apt-get update && apt-get install -y --no-install-recommends gh \
     && rm -rf /var/lib/apt/lists/*
 
-# Runner user (GH Actions runner cannot run as root)
+# Runner user (GH Actions runner refuses to run as root)
 RUN useradd -m -s /bin/bash runner \
     && echo "runner ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
@@ -23,15 +28,16 @@ ARG RUNNER_ARCH=x64
 WORKDIR /home/runner/actions-runner
 RUN curl -sL "https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-${RUNNER_ARCH}-${RUNNER_VERSION}.tar.gz" \
     | tar xz \
-    && ./bin/installdependencies.sh \
-    && chown -R runner:runner /home/runner
+    && ./bin/installdependencies.sh
 
 # Allure + Wrangler (used for R2 report uploads)
 RUN npm install -g allure-commandline wrangler
 
+# Everything under /home/runner owned by runner
+RUN chown -R runner:runner /home/runner
+
 COPY entrypoint.sh /home/runner/entrypoint.sh
 RUN chmod +x /home/runner/entrypoint.sh
 
-USER runner
-WORKDIR /home/runner/actions-runner
+# Start as root — entrypoint fixes volume permissions then drops to runner
 ENTRYPOINT ["/home/runner/entrypoint.sh"]
