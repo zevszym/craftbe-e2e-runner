@@ -18,6 +18,12 @@ fi
 
 RUNNER_TOKEN="${RUNNER_TOKEN:?Either GITHUB_PAT or RUNNER_TOKEN is required}"
 
+# Remove stale config from previous run (e.g. after hard kill)
+if [ -f ".runner" ]; then
+  echo ":: Removing stale runner config..."
+  ./config.sh remove --token "${RUNNER_TOKEN}" 2>/dev/null || true
+fi
+
 # Configure
 ./config.sh \
   --url "${GITHUB_URL}" \
