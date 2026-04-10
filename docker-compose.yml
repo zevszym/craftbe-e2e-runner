@@ -1,7 +1,6 @@
 services:
   runner:
-    image: ghcr.io/zevszym/craftbe-e2e-runner:latest
-    # build: .  # uncomment for local builds
+    build: .
     env_file: .env
     environment:
       - RUNNER_NAME=${RUNNER_NAME:-craftbe-runner}
